@@ -1,5 +1,6 @@
 """Alembic environment configured from the application's central settings."""
 
+import app.models  # noqa: F401  # Register all model tables before reading metadata.
 from alembic import context
 from app.core.config import get_settings
 from app.core.database import Base, engine
