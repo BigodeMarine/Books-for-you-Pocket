@@ -1,0 +1,49 @@
+name: Backend CI
+
+on:
+  push:
+    branches:
+      - main
+      - "feature/**"
+      - "fix/**"
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  backend-quality:
+    name: Ruff and Pytest
+    runs-on: ubuntu-latest
+    env:
+      POSTGRES_DB: ci_catalog
+      POSTGRES_USER: ci_user
+      POSTGRES_PASSWORD: ci_password
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Install Poetry 2.4.1
+        run: pipx install poetry==2.4.1
+
+      - name: Set up Python 3.11 and Poetry cache
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: poetry
+          cache-dependency-path: backend/poetry.lock
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: poetry install --with dev --no-interaction --no-ansi
+
+      - name: Check code with Ruff
+        working-directory: backend
+        run: poetry run ruff check app tests alembic
+
+      - name: Run backend tests
+        working-directory: backend
+        run: poetry run pytest -v
