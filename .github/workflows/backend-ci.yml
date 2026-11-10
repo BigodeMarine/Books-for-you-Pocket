@@ -38,7 +38,7 @@ jobs:
 
       - name: Install backend dependencies
         working-directory: backend
-        run: poetry install --with dev --no-interaction --no-ansi
+        run: poetry install --with dev --no-root --no-interaction --no-ansi
 
       - name: Check code with Ruff
         working-directory: backend
