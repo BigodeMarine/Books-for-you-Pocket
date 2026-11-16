@@ -2,9 +2,11 @@
 
 from app.models.author import Author
 from app.models.edition import Edition
+from app.models.edition_external_identifier import EditionExternalIdentifier
 from app.models.enums import (
     AvailabilityStatus,
     EditionFormat,
+    ExternalIdentifierSource,
     MetadataSource,
     OfferCondition,
     WorkType,
@@ -19,7 +21,9 @@ __all__ = [
     "Author",
     "AvailabilityStatus",
     "Edition",
+    "EditionExternalIdentifier",
     "EditionFormat",
+    "ExternalIdentifierSource",
     "Genre",
     "MetadataSource",
     "Offer",
