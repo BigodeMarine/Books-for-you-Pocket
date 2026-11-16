@@ -7,7 +7,9 @@ from app.models import (
     Author,
     AvailabilityStatus,
     Edition,
+    EditionExternalIdentifier,
     EditionFormat,
+    ExternalIdentifierSource,
     Genre,
     MetadataSource,
     Offer,
@@ -24,6 +26,7 @@ def test_models_register_all_expected_tables() -> None:
     assert set(Base.metadata.tables) == {
         "works",
         "editions",
+        "edition_external_identifiers",
         "authors",
         "genres",
         "sellers",
@@ -38,6 +41,8 @@ def test_relationships_have_expected_cardinality_and_ownership() -> None:
     """Relationships connect works to their editions, contributors, and offers."""
     assert inspect(Work).relationships["editions"].uselist is True
     assert inspect(Edition).relationships["work"].uselist is False
+    assert inspect(Edition).relationships["external_identifiers"].uselist is True
+    assert inspect(EditionExternalIdentifier).relationships["edition"].uselist is False
     assert inspect(Work).relationships["authors"].uselist is True
     assert inspect(Author).relationships["works"].uselist is True
     assert inspect(Work).relationships["genres"].uselist is True
@@ -50,6 +55,9 @@ def test_relationships_have_expected_cardinality_and_ownership() -> None:
     assert inspect(PriceHistory).relationships["offer"].uselist is False
     assert inspect(Offer).relationships["price_history"].passive_deletes == "all"
     assert inspect(Edition).relationships["offers"].passive_deletes == "all"
+    assert (
+        inspect(Edition).relationships["external_identifiers"].passive_deletes is True
+    )
     assert inspect(Seller).relationships["offers"].passive_deletes == "all"
     assert inspect(Work).relationships["authors"].secondary.name == "work_authors"
     assert inspect(Work).relationships["genres"].secondary.name == "work_genres"
@@ -59,7 +67,16 @@ def test_relationships_have_expected_cardinality_and_ownership() -> None:
 
 def test_model_primary_keys_use_uuid() -> None:
     """All entity primary keys use SQLAlchemy's UUID type."""
-    for model in (Work, Edition, Author, Genre, Seller, Offer, PriceHistory):
+    for model in (
+        Work,
+        Edition,
+        EditionExternalIdentifier,
+        Author,
+        Genre,
+        Seller,
+        Offer,
+        PriceHistory,
+    ):
         primary_key = next(iter(model.__table__.primary_key.columns))
         assert isinstance(primary_key.type, Uuid)
 
@@ -81,14 +98,29 @@ def test_enum_values_match_the_catalog_contract() -> None:
     """Enums expose the expected stable values and use validated check constraints."""
     assert {member.value for member in WorkType} == {"book", "manga", "comic"}
     assert {member.value for member in EditionFormat} == {
-        "paperback", "hardcover", "ebook", "audiobook", "digital", "other"
+        "paperback",
+        "hardcover",
+        "ebook",
+        "audiobook",
+        "digital",
+        "other",
     }
     assert {member.value for member in MetadataSource} == {
-        "google_books", "open_library", "manual"
+        "google_books",
+        "open_library",
+        "manual",
     }
+    assert {member.value for member in ExternalIdentifierSource} == {
+        "google_books",
+        "open_library",
+    }
+    assert "manual" not in {member.value for member in ExternalIdentifierSource}
     assert {member.value for member in OfferCondition} == {"new", "used"}
     assert {member.value for member in AvailabilityStatus} == {
-        "in_stock", "out_of_stock", "preorder", "unknown"
+        "in_stock",
+        "out_of_stock",
+        "preorder",
+        "unknown",
     }
 
     for table, field in (
@@ -104,11 +136,18 @@ def test_enum_values_match_the_catalog_contract() -> None:
         assert enum_type.create_constraint is True
         assert enum_type.validate_strings is True
 
+    external_source_type = EditionExternalIdentifier.__table__.c.source.type
+    assert external_source_type.native_enum is True
+    assert external_source_type.name == "external_identifier_source"
+    assert external_source_type.create_constraint is True
+    assert external_source_type.validate_strings is True
+
 
 def test_unique_constraints_cover_isbns_and_slugs() -> None:
     """ISBNs and public slugs have database uniqueness constraints."""
     assert _unique_constraint_exists(Edition, "isbn_10")
     assert _unique_constraint_exists(Edition, "isbn_13")
+    assert _unique_constraint_exists(EditionExternalIdentifier, "source", "external_id")
     assert _unique_constraint_exists(Genre, "slug")
     assert _unique_constraint_exists(Seller, "slug")
 
@@ -134,12 +173,14 @@ def test_indexes_and_foreign_keys_cover_common_joins() -> None:
     assert "ix_price_history_offer_captured_at" in {
         index.name for index in PriceHistory.__table__.indexes
     }
-    assert {column.name for column in Base.metadata.tables["work_authors"].primary_key.columns} == {
-        "work_id", "author_id"
-    }
-    assert {column.name for column in Base.metadata.tables["work_genres"].primary_key.columns} == {
-        "work_id", "genre_id"
-    }
+    assert {
+        column.name
+        for column in Base.metadata.tables["work_authors"].primary_key.columns
+    } == {"work_id", "author_id"}
+    assert {
+        column.name
+        for column in Base.metadata.tables["work_genres"].primary_key.columns
+    } == {"work_id", "genre_id"}
 
     edition_work_fk = next(iter(Edition.__table__.c.work_id.foreign_keys))
     assert edition_work_fk.target_fullname == "works.id"
@@ -154,17 +195,31 @@ def test_indexes_and_foreign_keys_cover_common_joins() -> None:
     assert history_offer_fk.target_fullname == "offers.id"
     assert history_offer_fk.ondelete == "RESTRICT"
 
+    external_identifier_edition_fk = next(
+        iter(EditionExternalIdentifier.__table__.c.edition_id.foreign_keys)
+    )
+    assert external_identifier_edition_fk.target_fullname == "editions.id"
+    assert external_identifier_edition_fk.ondelete == "CASCADE"
+    assert "ix_edition_external_identifiers_edition_id" in {
+        index.name for index in EditionExternalIdentifier.__table__.indexes
+    }
+
 
 def test_edition_stores_optional_cover_and_metadata_provenance() -> None:
     """Edition cover and external metadata fields remain optional and edition-scoped."""
-    for field in ("cover_url", "metadata_source", "metadata_external_id", "metadata_updated_at"):
+    for field in (
+        "cover_url",
+        "metadata_source",
+        "metadata_external_id",
+        "metadata_updated_at",
+    ):
         assert Edition.__table__.c[field].nullable is True
 
 
-def _unique_constraint_exists(model: type, field: str) -> bool:
-    """Return whether a mapped model declares a unique constraint for a field."""
+def _unique_constraint_exists(model: type, *fields: str) -> bool:
+    """Return whether a mapped model declares a unique constraint for columns."""
     return any(
         isinstance(constraint, UniqueConstraint)
-        and {column.name for column in constraint.columns} == {field}
+        and {column.name for column in constraint.columns} == set(fields)
         for constraint in model.__table__.constraints
     )

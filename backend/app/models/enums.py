@@ -32,6 +32,13 @@ class MetadataSource(str, Enum):
     MANUAL = "manual"
 
 
+class ExternalIdentifierSource(str, Enum):
+    """Providers that supply identifiers for external book records."""
+
+    GOOGLE_BOOKS = "google_books"
+    OPEN_LIBRARY = "open_library"
+
+
 class OfferCondition(str, Enum):
     """Condition of the item included in an offer."""
 
@@ -54,6 +61,18 @@ def database_enum(enum_class: type[Enum], name: str) -> SQLAlchemyEnum:
         enum_class,
         name=name,
         native_enum=False,
+        create_constraint=True,
+        validate_strings=True,
+        values_callable=lambda members: [member.value for member in members],
+    )
+
+
+def database_native_enum(enum_class: type[Enum], name: str) -> SQLAlchemyEnum:
+    """Create a named database enum, native on PostgreSQL and constrained elsewhere."""
+    return SQLAlchemyEnum(
+        enum_class,
+        name=name,
+        native_enum=True,
         create_constraint=True,
         validate_strings=True,
         values_callable=lambda members: [member.value for member in members],

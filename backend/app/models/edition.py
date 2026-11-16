@@ -11,6 +11,7 @@ from app.core.database import Base
 from app.models.enums import EditionFormat, MetadataSource, database_enum
 
 if TYPE_CHECKING:
+    from app.models.edition_external_identifier import EditionExternalIdentifier
     from app.models.offer import Offer
     from app.models.work import Work
 
@@ -20,9 +21,14 @@ class Edition(Base):
 
     __tablename__ = "editions"
 
-    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
     work_id: Mapped[uuid.UUID] = mapped_column(
-        Uuid(as_uuid=True), ForeignKey("works.id", ondelete="CASCADE"), nullable=False, index=True
+        Uuid(as_uuid=True),
+        ForeignKey("works.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     isbn_10: Mapped[str | None] = mapped_column(String(10), unique=True, name="isbn_10")
     isbn_13: Mapped[str | None] = mapped_column(String(13), unique=True, name="isbn_13")
@@ -39,11 +45,23 @@ class Edition(Base):
         database_enum(MetadataSource, "metadata_source")
     )
     metadata_external_id: Mapped[str | None] = mapped_column(String(255))
-    metadata_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    metadata_updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True)
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
     )
 
     work: Mapped["Work"] = relationship(back_populates="editions")
-    offers: Mapped[list["Offer"]] = relationship(back_populates="edition", passive_deletes="all")
+    external_identifiers: Mapped[list["EditionExternalIdentifier"]] = relationship(
+        back_populates="edition", cascade="all, delete-orphan", passive_deletes=True
+    )
+    offers: Mapped[list["Offer"]] = relationship(
+        back_populates="edition", passive_deletes="all"
+    )
