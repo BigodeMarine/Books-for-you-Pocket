@@ -37,6 +37,22 @@ def run_search(
     return asyncio.run(search())
 
 
+def run_get_by_id(handler: httpx.MockTransport, provider_id: str = "book-1"):
+    """Run a volume lookup through a transport that never uses the network."""
+
+    async def get_by_id():
+        async with httpx.AsyncClient(transport=handler) as client:
+            provider = GoogleBooksProvider(client)
+            return await provider.get_by_id(provider_id)
+
+    return asyncio.run(get_by_id())
+
+
+def valid_volume(provider_id: str = "book-1") -> dict:
+    """Build a minimal usable Google Books volume response."""
+    return {"id": provider_id, "volumeInfo": {"title": "Earthsea"}}
+
+
 def test_search_normalizes_valid_volumes_and_skips_malformed_items() -> None:
     """A malformed item does not discard other usable volumes in the page."""
     body = {
@@ -165,4 +181,112 @@ def test_search_rejects_invalid_provider_payloads(content: bytes) -> None:
     with pytest.raises(BookProviderInvalidResponse):
         run_search(
             httpx.MockTransport(lambda request: httpx.Response(200, content=content))
+        )
+
+
+def test_get_by_id_fetches_and_normalizes_volume() -> None:
+    """Lookup uses the provider ID path and the shared volume normalizer."""
+    captured = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured.append(request.url.path)
+        return httpx.Response(200, json=valid_volume())
+
+    book = run_get_by_id(httpx.MockTransport(handler))
+
+    assert captured == ["/books/v1/volumes/book-1"]
+    assert book is not None
+    assert book.provider_id == "book-1"
+    assert book.title == "Earthsea"
+
+
+def test_get_by_id_returns_none_for_not_found() -> None:
+    """Only an HTTP 404 represents a missing volume."""
+    result = run_get_by_id(
+        httpx.MockTransport(lambda request: httpx.Response(404))
+    )
+
+    assert result is None
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        b"not-json",
+        json.dumps([valid_volume()]).encode(),
+        json.dumps({"id": "book-1", "volumeInfo": {}}).encode(),
+    ],
+)
+def test_get_by_id_rejects_malformed_success_payloads(content: bytes) -> None:
+    """Malformed JSON and unusable volumes are invalid provider responses."""
+    with pytest.raises(BookProviderInvalidResponse):
+        run_get_by_id(
+            httpx.MockTransport(lambda request: httpx.Response(200, content=content))
+        )
+
+
+def test_get_by_id_rejects_mismatched_volume_id() -> None:
+    """The returned volume must match the requested provider ID."""
+    with pytest.raises(BookProviderInvalidResponse):
+        run_get_by_id(
+            httpx.MockTransport(
+                lambda request: httpx.Response(200, json=valid_volume("other-book"))
+            )
+        )
+
+
+def test_get_by_id_maps_timeout_and_transport_errors() -> None:
+    """Lookup maps timeout and connection failures like search."""
+
+    def timeout_handler(request: httpx.Request) -> httpx.Response:
+        raise httpx.ReadTimeout("private timeout detail", request=request)
+
+    def connection_handler(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("private connection detail", request=request)
+
+    with pytest.raises(BookProviderTimeout):
+        run_get_by_id(httpx.MockTransport(timeout_handler))
+    with pytest.raises(BookProviderTransportError):
+        run_get_by_id(httpx.MockTransport(connection_handler))
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        httpx.Response(429, json={"error": {"message": "private quota detail"}}),
+        httpx.Response(
+            403,
+            json={"error": {"errors": [{"reason": "userRateLimitExceeded"}]}},
+        ),
+    ],
+)
+def test_get_by_id_maps_quota_responses(response: httpx.Response) -> None:
+    """HTTP quota responses retain the provider quota error mapping."""
+    with pytest.raises(BookProviderQuotaExceeded):
+        run_get_by_id(httpx.MockTransport(lambda request: response))
+
+
+def test_get_by_id_maps_other_http_failures() -> None:
+    """Other HTTP failures become a generic transport error."""
+    with pytest.raises(BookProviderTransportError) as error:
+        run_get_by_id(
+            httpx.MockTransport(
+                lambda request: httpx.Response(
+                    500, json={"error": {"message": "private upstream detail"}}
+                )
+            )
+        )
+
+    assert "private upstream detail" not in str(error.value)
+
+
+def test_get_by_id_maps_non_quota_forbidden_response() -> None:
+    """A 403 without a recognized quota reason is a transport failure."""
+    with pytest.raises(BookProviderTransportError):
+        run_get_by_id(
+            httpx.MockTransport(
+                lambda request: httpx.Response(
+                    403, json={"error": {"errors": [{"reason": "forbidden"}]}}
+                )
+            )
         )

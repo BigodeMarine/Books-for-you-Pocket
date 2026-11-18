@@ -46,6 +46,10 @@ class FakeBookProvider:
             41,
         )
 
+    async def get_by_id(self, provider_id: str) -> ExternalBookRead | None:
+        """Satisfy the provider protocol; the search routes do not use this."""
+        return None
+
 
 @pytest.fixture
 def client() -> Iterator[TestClient]:
