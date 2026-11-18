@@ -1,6 +1,7 @@
 """Google Books API adapter."""
 
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -87,6 +88,38 @@ class GoogleBooksProvider:
             if (book := self._normalize_volume(raw_item)) is not None
         ]
         return books, total_items
+
+    async def get_by_id(self, provider_id: str) -> ExternalBookRead | None:
+        """Fetch and normalize one volume, returning None only for HTTP 404."""
+        try:
+            response = await self._client.get(
+                f"{GOOGLE_BOOKS_VOLUMES_URL}/{quote(provider_id, safe='')}"
+            )
+        except httpx.TimeoutException as exc:
+            raise BookProviderTimeout from exc
+        except httpx.RequestError as exc:
+            raise BookProviderTransportError from exc
+
+        if response.status_code == 404:
+            return None
+        if response.status_code == 429 or self._is_quota_response(response):
+            raise BookProviderQuotaExceeded
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            raise BookProviderTransportError from exc
+
+        try:
+            payload = response.json()
+        except ValueError as exc:
+            raise BookProviderInvalidResponse from exc
+        if not isinstance(payload, dict):
+            raise BookProviderInvalidResponse
+
+        book = self._normalize_volume(payload)
+        if book is None or book.provider_id != provider_id:
+            raise BookProviderInvalidResponse
+        return book
 
     @staticmethod
     def _is_quota_response(response: httpx.Response) -> bool:

@@ -26,7 +26,7 @@ class BookProviderQuotaExceeded(BookProviderError):
 
 
 class BookProvider(Protocol):
-    """Async contract implemented by external book search providers."""
+    """Async contract implemented by external book providers."""
 
     async def search(
         self,
@@ -36,3 +36,6 @@ class BookProvider(Protocol):
         max_results: int,
     ) -> tuple[list[ExternalBookRead], int]:
         """Return normalized results and the provider's total result count."""
+
+    async def get_by_id(self, provider_id: str) -> ExternalBookRead | None:
+        """Return one normalized volume, or None when it does not exist."""
