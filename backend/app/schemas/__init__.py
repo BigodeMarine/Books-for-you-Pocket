@@ -8,11 +8,23 @@ from app.schemas.catalog import (
     WorkDetailRead,
     WorkListItemRead,
 )
+from app.schemas.catalog_imports import (
+    ExistingWorkTarget,
+    GoogleBooksImportRequest,
+    GoogleBooksImportResponse,
+    GoogleBooksImportWarning,
+    NewWorkTarget,
+)
 
 __all__ = [
     "AuthorRead",
     "EditionRead",
+    "ExistingWorkTarget",
     "GenreRead",
+    "GoogleBooksImportRequest",
+    "GoogleBooksImportResponse",
+    "GoogleBooksImportWarning",
+    "NewWorkTarget",
     "PaginatedResponse",
     "WorkDetailRead",
     "WorkListItemRead",

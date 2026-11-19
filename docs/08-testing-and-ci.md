@@ -4,7 +4,15 @@
 
 Pytest está configurado em `backend/pyproject.toml`, com `pythonpath = ["."]` e `testpaths = ["tests"]`. Os testes de services e API usam SQLite em memória; os testes do provider Google Books simulam transporte HTTP. Há testes para health check, configuração de banco, schemas, consultas de catálogo, ofertas/histórico, models, identificadores externos, API externa e mapeamento de erros do Google Books.
 
-SQLite não valida integralmente comportamento específico de PostgreSQL, incluindo enum nativo. A auditoria não executou testes; esta documentação não afirma resultado de execução.
+SQLite não valida integralmente comportamento específico de PostgreSQL, incluindo enum nativo. No último resultado informado, `poetry run pytest -v` aprovou 196 testes; houve um aviso de depreciação do Starlette sobre o uso de `httpx` com `starlette.testclient`.
+
+### Cobertura da importação Google Books
+
+Já existem testes dos schemas e da fundação do serviço, incluindo persistência com SQLite em memória, criação/reutilização de Work e Edition, idempotência, ISBN e warnings, autores e gêneros, proveniência, metadados manuais, conflitos de destino, consulta ao provider, `flush()` e rollback controlado pelo chamador.
+
+Continuam pendentes testes da rota pública `POST /api/v1/catalog/imports/google-books`, incluindo validação HTTP, mapeamento de erros e códigos de resposta do endpoint.
+
+Não ampliar o CI para PostgreSQL nesta etapa. Testes de concorrência em banco real, recovery automático de `IntegrityError` e validação de migrations com PostgreSQL podem ser avaliados como melhorias futuras; os testes SQLite não comprovam essas propriedades.
 
 ## Ruff
 
