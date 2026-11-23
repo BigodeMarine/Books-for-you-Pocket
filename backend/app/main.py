@@ -7,6 +7,7 @@ import httpx
 from fastapi import FastAPI
 
 from app.api.routes.catalog import router as catalog_router
+from app.api.routes.catalog_imports import router as catalog_imports_router
 from app.api.routes.external_books import router as external_books_router
 
 
@@ -20,6 +21,7 @@ async def lifespan(application: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(title="Books for Your Pocket API", version="0.1.0", lifespan=lifespan)
 app.include_router(catalog_router)
+app.include_router(catalog_imports_router)
 app.include_router(external_books_router)
 
 
