@@ -1,7 +1,5 @@
+import { CatalogListing } from "@/features/catalog/components/catalog-listing/CatalogListing";
+
 export default function Home() {
-  return (
-    <main>
-      <div>Hello world!</div>
-    </main>
-  );
+  return <CatalogListing />;
 }
