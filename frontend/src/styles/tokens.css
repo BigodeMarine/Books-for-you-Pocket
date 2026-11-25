@@ -1,0 +1,36 @@
+:root {
+  --color-honor-950: #071B35;
+  --color-honor-800: #123B68;
+  --color-sapphire-600: #2463A5;
+  --color-stormlight-400: #8FC8F2;
+  --color-light-100: #F5F9FD;
+  --color-light-0: #FFFFFF;
+  --color-text: #172638;
+
+  --color-canvas: var(--color-light-100);
+  --color-surface: var(--color-light-0);
+  --color-heading: #152943;
+  --color-text-secondary: #53677F;
+  --color-text-subtle: #5D7189;
+  --color-label: #263E5B;
+  --color-brand-muted: #315783;
+  --color-border: #DBE5F2;
+  --color-border-control: #AEBED2;
+  --color-border-action: #1E4678;
+  --color-action: var(--color-honor-800);
+  --color-action-hover: var(--color-honor-950);
+  --color-focus: var(--color-sapphire-600);
+  --color-error: #7F2830;
+  --color-disabled-border: #C7D2DF;
+  --color-disabled-surface: #E8EDF4;
+  --color-disabled-text: #66778B;
+  --color-spinner-track: #D6E1EF;
+  --color-cover-start: #E9F0FA;
+  --color-cover-middle: #D8E4F4;
+  --color-cover-end: #C5D5EB;
+  --color-cover-mark: #52729E;
+  --color-cover-mark-inset: #9EB4D1;
+  --color-panel-shadow: rgb(24 48 86 / 6%);
+  --color-card-shadow: rgb(24 48 86 / 5%);
+  --color-ambient-glow: rgb(220 232 248 / 72%);
+}

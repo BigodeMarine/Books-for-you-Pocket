@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 import httpx
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes.catalog import router as catalog_router
 from app.api.routes.catalog_imports import router as catalog_imports_router
@@ -20,6 +21,13 @@ async def lifespan(application: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(title="Books for Your Pocket API", version="0.1.0", lifespan=lifespan)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.include_router(catalog_router)
 app.include_router(catalog_imports_router)
 app.include_router(external_books_router)

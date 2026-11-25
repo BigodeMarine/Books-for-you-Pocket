@@ -1,0 +1,275 @@
+.page {
+  min-height: 100vh;
+  padding: 2rem 1rem 3rem;
+  background:
+    radial-gradient(ellipse at 90% 0%, var(--color-ambient-glow), var(--color-canvas) 32rem),
+    var(--color-canvas);
+  color: var(--color-text);
+}
+
+.shell {
+  width: min(100%, 72rem);
+  margin: 0 auto;
+}
+
+.header {
+  padding: 1.25rem 0 1.75rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.65rem;
+  color: var(--color-brand-muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.heading {
+  max-width: 48rem;
+  margin: 0;
+  color: var(--color-heading);
+  font-size: clamp(2rem, 8vw, 3.6rem);
+  letter-spacing: -0.045em;
+  line-height: 1.08;
+}
+
+.intro {
+  max-width: 39rem;
+  margin: 1rem 0 0;
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.filters {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  background: var(--color-surface);
+  box-shadow: 0 0.5rem 1.8rem var(--color-panel-shadow);
+}
+
+.field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.field label {
+  color: var(--color-label);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  min-height: 2.9rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--color-border-control);
+  border-radius: 0.55rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.field input::placeholder {
+  color: var(--color-text-subtle);
+}
+
+.submitButton,
+.secondaryButton,
+.pageButton {
+  min-height: 2.9rem;
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--color-border-action);
+  border-radius: 0.55rem;
+  background: var(--color-action);
+  color: var(--color-light-0);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+.submitButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  align-self: end;
+}
+
+.submitButton span[aria-hidden="true"] {
+  font-size: 1.3rem;
+  line-height: 0.8;
+}
+
+.submitButton:hover,
+.secondaryButton:hover,
+.pageButton:not(:disabled):hover {
+  border-color: var(--color-action-hover);
+  background: var(--color-action-hover);
+}
+
+.field input:focus-visible,
+.field select:focus-visible,
+.submitButton:focus-visible,
+.secondaryButton:focus-visible,
+.pageButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+.results {
+  padding-top: 2.25rem;
+}
+
+.resultsHeader {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.resultsHeader h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 1.5rem;
+}
+
+.resultCount {
+  margin: 0.35rem 0 0;
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.state,
+.errorState,
+.emptyState {
+  display: flex;
+  min-height: 12rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 2rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.9rem;
+  background: var(--color-surface);
+  text-align: center;
+}
+
+.state p,
+.errorState p,
+.emptyState p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+}
+
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid var(--color-spinner-track);
+  border-top-color: var(--color-action);
+  border-radius: 50%;
+  animation: spin 750ms linear infinite;
+}
+
+.errorState p {
+  color: var(--color-error);
+}
+
+.emptyState h3 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 1.15rem;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.pagination p {
+  margin: 0;
+  color: var(--color-label);
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.pageButton {
+  min-width: 5.5rem;
+  padding-inline: 0.75rem;
+}
+
+.pageButton:disabled {
+  border-color: var(--color-disabled-border);
+  background: var(--color-disabled-surface);
+  color: var(--color-disabled-text);
+  cursor: not-allowed;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (min-width: 40rem) {
+  .page {
+    padding: 3rem 1.5rem 4rem;
+  }
+
+  .header {
+    padding-top: 1.75rem;
+    padding-bottom: 2.25rem;
+  }
+
+  .filters {
+    grid-template-columns: minmax(0, 1fr) minmax(12rem, 0.42fr) auto;
+    align-items: end;
+    padding: 1.25rem;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.15rem;
+  }
+
+  .pagination {
+    justify-content: center;
+    gap: 1.25rem;
+  }
+}
+
+@media (min-width: 68rem) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+
+  .submitButton,
+  .secondaryButton,
+  .pageButton {
+    transition: none;
+  }
+}

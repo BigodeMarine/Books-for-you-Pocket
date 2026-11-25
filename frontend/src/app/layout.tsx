@@ -1,5 +1,7 @@
 
 import type { Metadata } from "next";
+import "@/styles/tokens.css";
+import "./globals.css";
 
 // Metadados padrão utilizados pela aplicação.
 export const metadata: Metadata = {
